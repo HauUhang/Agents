@@ -160,7 +160,7 @@
 为了代理可靠地进行“函数调用”并使用工具，它需要清晰的指令、安全连接和[协调](https://ai.google.dev/gemini-api/docs/function-calling?example=meeting&hl=zh-cn)<sup>15</sup>。。长期标准如**OpenAPI**规范提供这一点，给Agent一个结构化合同，描述工具的目的、其所需参数及其预期响应。这个模式让模型每次生成正确的函数调用并解释API响应。对于更简单的发现和工具连接，开放标准如**Model Context Protocol (MCP)**变得流行，因为它们更[方便](https://github.com/modelcontextprotocol/)<sup>16</sup>。此外，一些模型有本地工具，如带有本地Google搜索的Gemini，其中函数调用作为LM调用[本身](https://ai.google.dev/gemini-api/docs/google-search?hl=zh-cn)<sup>17</sup>的一部分发生。
 
 ## 协调层
-如果模型是Agnet的大脑，工具是它的双手，协调层是连接它们的中央神经系统。它是运行“思考、行动、观察”循环的引擎，是治理代理行为的状态机，是开发人员精心制作的逻辑活起来的地方。这一层不仅仅是管道；它是整个代理交响乐的指挥，决定模型何时应该推理，哪个工具应该行动，以及行动的结果如何告知下一个动作。
+如果模型是Agent的大脑，工具是它的双手，协调层是连接它们的中央神经系统。它是运行“思考、行动、观察”循环的引擎，是治理代理行为的状态机，是开发人员精心制作的逻辑活起来的地方。这一层不仅仅是管道；它是整个代理交响乐的指挥，决定模型何时应该推理，哪个工具应该行动，以及行动的结果如何告知下一个动作。
 
 ## 核心设计选择
 首个架构决策是确定Agent的自主程度。这种选择存在于一个连续谱上：一端是确定性、可预测的工作流，将语言模型作为特定任务的工具——如同在现有流程中添加少量人工智能进行增强；另一端则是让语言模型掌控全局，通过动态适应、规划和执行任务来达成目标。
@@ -175,7 +175,7 @@
 在这里，您告诉它，`您是Acme Corp的有帮助客户支持代理，... `并提供约束、期望输出模式、参与规则、特定语调，以及何时以及为什么应该使用其工具的明确指导。指令中的几个示例场景通常非常有效。
 
 ## 用上下文增强
-Agent的“内存”在运行时被编排到LM上下文窗口中。对于更完整的深入探讨，请参阅本系列中专注代理内存的白皮书。
+Agent的“内存”在运行时被协调到LM上下文窗口中。对于更完整的深入探讨，请参阅本系列中专注代理内存的白皮书。
 
 短期内存是代理的活动“草稿本”，维护当前对话的运行历史。它跟踪正在进行的循环中的（行动、观察）对序列，提供模型决定下一步做什么的即时上下文。这可能被实现为像状态、工件、会话或线程这样的抽象。
 
@@ -199,3 +199,256 @@ Agent的“内存”在运行时被编排到LM上下文窗口中。对于更完�
 ![Vertex AI 代理构建器](https://github.com/HauUhang/Agents/blob/main/img/vertex_AI_Agent_builder.png?raw=true)
 
 如果您不是软件开发人员和DevOps专家，部署您的第一个代理的过程可能令人生畏。许多代理框架通过部署命令或专用平台使这变得容易，这些应该用于早期探索和入门。提升到安全和生产就绪环境通常需要更大的时间投资和最佳实践的应用，包括[您的代理](https://github.com/GoogleCloudPlatform/agent-starter-pack)<sup>23</sup>的CI/CD和自动化测试。
+
+## 代理操作：应对不可预测性的结构化方法
+当你第一次创建Agent时，你将反复手动测试其行为表现。新增的功能是否正常运作？修复漏洞时是否引发了其他问题？测试在软件开发中司空见惯，但在生成式人工智能领域却有着截然不同的运作模式。
+
+从传统、确定性软件到随机、代理系统的转变需要新的操作哲学。传统软件单元测试可以简单地断言`输出 == 预期`；但当代理的响应在设计上是概率性的时，这不起作用。而且，因为语言复杂，它通常需要LM来评估“质量”——代理的响应做了它应该做的所有事，没有它不应该做的，并带有适当的语调。下图是[DevOps、MLOps和GenAIOps的操作领域之间关系](https://medium.com/google-cloud/genai-in-production-mlops-or-genaiops-25691c9becd0)
+![DevOps、MLOps和GenAIOps的操作领域之间关系](https://github.com/HauUhang/Agents/blob/main/img/relationships.png?raw=true)
+
+代理操作是对这种新现实的纪律化、结构化方法。它是DevOps和MLOps的自然演变，针对构建、部署和管理AI Agent的独特挑战量身定制，将不可预测性从责任转变为管理的、可衡量的、可靠的功能<sup>24</sup>。对于更完整的深入探讨，请参阅本系列中专注代理质量的白皮书。
+
+## 衡量重要的事项：像A/B实验一样仪表成功
+在能改进代理之前，必须在业务上下文中定义“更好”意味着什么。进行可观察性策略框架化为A/B测试，并问自己：证明代理交付价值的Key Performance Indicators (KPIs)是什么？这些指标应该超越技术正确性，并衡量现实世界影响：目标完成率、用户满意度分数、任务延迟、每个交互的操作成本，以及——最重要的是——对业务目标的影响，如收入、转换或客户保留。这种自上而下的观点将指导您的其余测试，将您置于指标驱动开发的路径上，并让您计算投资回报。
+
+## 质量而非通过/失败：使用LM评判
+业务指标不会告诉代理是否正确行为。由于简单通过/失败是不可能的，我们转向使用“LM作为评判”评估质量。这涉及使用强大模型根据预定义标准评估代理的输出：它给出了正确答案吗？响应是事实基础的吗？它遵循指令了吗？这种自动化评估，对着一个黄金提示数据集运行，提供一致的质量衡量。
+
+创建评估数据集——包括理想（或“黄金”）问题和正确响应——可能是一个繁琐的过程。要构建这些，应该从代理的现有生产或开发交互中采样场景。数据集必须覆盖期望用户参与的全部用例范围，加上一些意外的。虽然在评估中的投资很快就会回报，但评估结果应该总是由领域专家审查，然后才被接受为有效。随着领域专家的支持，这些评估的整理与维护正日益成为产品经理的核心职责。
+
+## 指标驱动开发：你的部署通过/不通过
+当您自动化了数十个评估场景并建立了可信赖的质量评分体系后，便可自信地测试开发代理的变更。流程十分简单：将新版本应用于完整评估数据集，直接对比其评分与现有生产版本。这个稳健的系统消除了猜测成分，确保您对每次部署都充满信心。尽管自动化评估至关重要，但切勿忽视延迟、成本和任务成功率等其他关键因素。为实现最高安全性，请采用
+A/B部署策略逐步推出新版本，并将这些真实生产环境指标与模拟评分进行对照分析。
+
+## 使用OpenTelemetry跟踪调试：回答“为什么？”
+当指标下降或用户报告错误时，您需要弄清“原因”。
+OpenTelemetry追踪记录是代理程序完整执行路径（轨迹）的高保真逐步记录，可用于调试[代理程序的每个步骤](https://opentelemetry.io/blog/2025/ai-agent-observability/)。<sup>25</sup>通过追踪记录，您能清晰看到：发送给模型的具体提示、模型内部推理过程（若可获取）、模型调用的具体工具、为该工具生成的精确参数，以及作为观察结果返回的原始数据。初次查看时追踪记录可能显得复杂，但它们提供了诊断和修复任何问题根本原因所需的细节。重要追踪细节可转化为指标，但审查追踪记录主要用于调试而非性能概览。追踪数据可在Google Cloud Trace等平台无缝收集，这些平台能可视化并搜索海量追踪记录，从而简化根本原因分析流程。
+
+## 珍惜人类反馈：指导你的自动化
+人类反馈不是需要处理的烦恼，它是改进代理的最有价值和数据丰富资源。当用户提交错误报告或点击“ thumbs down”按钮时，他们在给你礼物：一个新的、现实世界的边缘案例，您的自动化评估场景错过了。收集和聚合这些数据是关键的；当你看到类似报告或指标下降的统计显著数量时，你必须将发生事件追溯到您的分析平台，以生成洞见并触发操作问题的警报。有效的代理操作过程通过捕获此反馈、复制问题，并将该特定场景转换为评估数据集中的新永久测试案例“关闭循环”。这确保您不仅修复错误，还为系统接种，防止整个错误类别再次发生。
+
+## Agent互操作性
+一旦构建了高质量Agent，你希望能够将它们与用户和其他Agent互连。在我们的身体部位比喻中，这将是Agent的脸。与连接代理不同，连接代理与数据和API；[代理不是工具](https://discuss.google.dev/t/agents-are-not-tools/192812)。让我们假设已经将工具连接到您的代理，现在让我们考虑如何将您的代理带入更广泛的生态系统。<sup>26</sup>
+
+## Agent和人类
+代理-人类交互的最常见形式是通过用户界面。在其最简单形式中，这是一个聊天机器人，用户输入请求，代理作为后端服务处理它并返回文本块。更先进的代理可以提供结构化数据，如JSON，来驱动丰富、动态的前端体验。Human in the loop (HITL)交互模式包括意图细化、目标扩展、确认和澄清请求。
+
+计算机使用是一类工具，其中LM控制用户界面，通常带有人类交互和监督。启用计算机使用的代理可以决定下一个最佳行动是导航到新页面、突出特定按钮，或用[相关信息](https://arxiv.org/abs/2310.03691)<sup>27</sup>预填充表单。
+
+代理不是代表用户使用界面，LM可以改变UI以满足时刻的需求。这可以通过控制UI的工具[（MCP UI）](https://mcpui.dev/)<sup>28</sup>，或可以与代理同步客户端状态的专用UI消息系统[（AG UI）](https://docs.ag-ui.com/introduction)<sup>29</sup>，甚至定制接口的生成[（A2UI）](https://github.com/google/A2UI)<sup>30</sup>来完成。
+
+当然，人类交互不限于屏幕和键盘。高级代理正在打破文本障碍，并转向实时、多模态通信，“live mode”创建更自然、人类般的连接。像[Gemini Live API]()<sup>31</sup>这样的技术启用双向流式传输，允许用户与代理对话并中断它，就像在自然对话中一样。
+
+这种能力从根本上改变了代理-人类协作的性质。通过访问设备的摄像头和麦克风，代理可以看到用户看到的东西并听到他们说的东西，以人类对话的延迟用生成的语音响应。
+
+这开辟了文本无法实现的广泛用例，从技术人员在修理设备时接收免提指导，到购物者获取实时风格建议。它使代理成为更直观和可访问的伙伴。
+
+## Agents和Agents
+正如代理必须与人类连接，它们也必须彼此连接。随着企业扩展AI的使用，不同团队将构建不同的专业代理。没有共同标准，连接它们将需要构建脆弱的、自定义API集成的纠缠网络，无法维护。核心挑战是双重的：发现（我的代理如何找到其他代理并知道它们能做什么？）和通信（我们如何确保它们说相同的语言？）。
+
+**Agent2Agent (A2A)协议**是设计用于解决这个问题的开放标准。它作为代理经济学的通用握手。A2A允许任何代理发布数字“名片”，称为Agent Card。这个简单的JSON文件广告代理的能力、其网络端点，以及与之交互所需的安全凭据。这使发现简单且标准化。与专注于解决事务请求的MCP相反，代理2代理通信通常用于额外的问题解决。
+
+一旦发现，代理使用面向任务的架构进行通信。不是简单的请求-响应，交互被框架为异步“任务”。客户端代理向服务器代理发送任务请求，然后服务器代理可以在长期连接上提供流式更新，因为它在问题上工作。这种鲁棒、标准化的通信协议是谜题的最后一块，启用协作的、3级多代理系统，代表自动化前沿。A2A将孤立的代理集合转变为真正的、互操作的生态系统。
+
+## Agent和成本
+随着AI Agent为我们做更多任务，其中一些任务涉及买卖、谈判或促进交易。当前的网络是为人类点击“购买”构建的，责任在人类身上。如果自治代理点击“购买”，它会创建信任危机——如果出错，谁的责任？这些是授权、真实性和问责的复杂问题。要解锁真正的代理经济，我们需要新标准，允许代理安全可靠地代表其用户交易。
+
+这个新兴领域远未确立，但两个关键协议正在铺平道路。**Agent Payments Protocol (AP2)**是一个开放协议，设计为代理商务的最终语言。它通过引入加密签名的数字“授权”扩展像A2A这样的协议。这些作为用户意图的可验证证明，为每个交易创建不可否认的审计轨迹。这允许代理基于用户委托的权限安全浏览、谈判和全球交易。补充这一点的是**x402**，一个开放互联网支付协议，使用标准HTTP 402“支付所需”状态码。它启用无摩擦的、机器对机器微支付，允许代理在按使用付费的基础上为API访问或数字内容付费，而无需复杂账户或订阅。这些协议共同构建代理网络的基础信任层。
+
+## 保护单个Agent：信任权衡
+当您创建您的第一个AI代理时，您立即面临一个基本紧张关系：效用和安全之间的权衡。要使代理有用，您必须赋予它权力——做出决策的自治和执行行动的工具，如发送电子邮件或查询数据库。然而，您赋予的每一盎司权力都引入相应的风险度量。主要安全问题是**流氓行动**——无意或有害行为——
+和**敏感数据泄露**。您想给您的代理足够长的绳子来做其工作，但足够短以防止它跑进交通，特别是当交通涉及不可逆转行动或您公司的私人数据时<sup>32</sup>。
+
+要管理这一点，您不能仅仅依赖AI模型的判断，因为它可以通过像[提示注入](https://simonwillison.net/series/prompt-injection/)<sup>33</sup>这样的技术操纵。相反，最佳实践是混合、[深度防御方法](https://storage.googleapis.com/gweb-research2023-media/pubtools/1018686.pdf)<sup>34</sup>。第一层由**传统、确定性护栏**组成——一组硬编码规则，作为模型推理之外的安全瓶颈。这可能是一个策略引擎，阻止任何超过100美元的购买，或在代理与外部API交互前要求明确用户确认。这一层为代理的权力提供可预测、可审计的硬限制。
+
+第二层利用**基于推理的防御**，使用AI来帮助保护AI。这涉及训练模型更具抵抗攻击的能力（对抗训练）和采用更小、专业的“守卫模型”，像安全分析师一样行动。这些模型可以在代理的拟议计划执行前检查它，标记潜在风险或违反政策的步骤以供审查。这种混合模型，结合代码的刚性确定性和AI的上下文意识，为即使单个代理创建鲁棒安全姿态，确保其权力始终与目的一致。
+
+## 代理身份：一种新的主体类别
+在传统安全模型中，有可能使用OAuth或SSO的人类用户，以及使用IAM或服务账户的服务。代理添加了第三类主体。代理不仅仅是一段代码；它是一个自治行动者，一种新的主体，需要自己的可验证身份。正如员工被发放ID徽章一样，平台上的每个代理必须被发放安全、可验证的“数字护照”。这个代理身份不同于调用它的用户身份和构建它的开发人员身份。这是我们必须在企业中接近身份和访问管理（IAM）的根本转变。
+
+让每个身份得到验证，并为所有身份拥有访问控制，是代理安全的基础。一旦代理拥有加密可验证身份（通常使用像[SPIFFE]()<sup>35</sup>这样的标准），它可以被授予自己的特定、最小特权权限。SalesAgent被授予CRM的读/写访问，而`HRonboardingAgent`被明确拒绝。这种粒度控制是关键的。它确保即使单个代理被入侵或行为异常，潜在爆炸半径也被包含。没有代理身份结构，代理无法以有限委托权限代表人类工作。
+
+`表1：不同行动者类别的非穷举示例，用于认证`
+
+| 主体实体   		    | 认证/验证		   | 注释			  					|
+| ----------------- | ---------------- | ---------------------------------- |
+| 用户      			| 使用OAuth或SSO认证 | 人类行动者，具有完全自治和对其行动的责任	|
+| Agents(主体的新类别)	| 使用SPIFFE验证	   | Agent具有委托权限，代表用户采取行动		|
+| 服务账户   			| 集成到IAM 		   | 应用程序和容器，完全确定性，无行动责任		|
+
+## 约束访问的政策
+策略是一种授权（AuthZ）形式，与认证（AuthN）不同。通常，策略限制主体的能力；例如，“营销中的用户只能访问这些27个API端点，并且不能执行DELETE命令。”当我们开发代理时，我们需要将权限应用到代理、它们的工具、其他内部代理、它们可以共享的上下文，以及远程代理。想想这样：如果您将所有API、数据、工具和代理添加到你的系统中，那么必须将访问限制为仅那些完成其工作所需的能力子集。这是推荐的方法：在保持[上下文相关](https://openreview.net/pdf?id=l9rATNBB8Y)<sup>36</sup>的同时应用最小特权原则。
+
+## 保护ADK代理
+有了身份和策略的核心原则确立，使用代理开发套件（ADK）构建的代理的安全成为通过代码和[配置](https://google.github.io/adk-docs/safety/)<sup>37</sup>应用这些概念的实际练习。
+
+如上所述，该过程需要身份的清晰定义：用户账户（例如OAuth）、服务账户（运行代码）、代理身份（使用委托权限）。一旦认证处理完毕，下一层防御涉及建立策略来约束对服务的访问。这通常在API治理层完成，与支持MCP和A2A服务的治理一起。
+
+下一层是将护栏构建到您的工具、模型和子代理中以强制执行策略。这确保无论LM推理什么或恶意提示可能建议什么，工具自己的逻辑将拒绝执行不安全或违反政策的行动。这种方法提供可预测和可审计的安全基线，将抽象安全策略转化为[具体、可靠的代码](https://google.github.io/adk-docs/callbacks/design-patterns-and-best-practices/#guardrails-policy-enforcement)。<sup>38</sup>
+
+对于可以适应代理运行时行为的更动态安全，ADK提供**回调和插件**。一个`before_tool_callback`允许你在工具运行前检查工具调用的参数，根据代理当前状态验证它们以防止错位行动。对于更可重用的策略，您可以构建插件。一个常见模式是“Gemini作为评判”<sup>39</sup>，使用快速、廉价的模型如Gemini Flash-Lite或您自己的微调Gemma模型来实时筛选用户输入和代理输出，以检测提示注入或有害内容。
+
+对于偏好完全管理、企业级解决方案的组织，用于这些动态检查的**Model Armor**可以作为可选服务集成。Model Armor作为一个专用安全层，筛选提示和响应以应对广泛威胁，包括提示注入、越狱尝试、敏感数据（PII）泄露和[恶意URL](cloud.google.com/security-command-center/docs/model-armor-overview)<sup>40</sup>。通过将这些复杂安全任务卸载到专用服务，开发人员可以确保一致、鲁棒保护，而无需自己构建和维护这些护栏。ADK内的这种混合方法——结合强大身份、工具内确定性逻辑、动态AI驱动护栏，以及像Model Armor这样的可选管理服务——就是您构建既强大又可信的单个代理的方式。下图是[安全和Agent](https://saif.google/focus-on-agents)
+![安全和Agent](https://github.com/HauUhang/Agents/blob/main/img/security_and_agents.png?raw=true)
+
+## 从单个Agent扩展到企业舰队
+单个AI Agent的生产成功是一个胜利。扩展到数百个舰队是一个架构挑战。如果您正在构建一两个代理，您的主要关注是安全。如果您正在构建许多代理，您必须设计系统来处理更多。正如API蔓延，当代理和工具在组织中扩散时，它们创建一个新的、复杂的交互网络、数据流和潜在安全漏洞。管理这种复杂性需要更高阶治理层，将所有身份和策略集成到中央控制平面中。
+
+## 安全和隐私：强化Agent前沿
+企业级平台必须解决生成式AI固有的独特安全和隐私挑战，即使只有一个代理在运行。代理本身成为一个新攻击向量。恶意行动者可以尝试**提示注入**来劫持代理的指令，或**数据投毒**来破坏它用于训练或RAG的信息。而且，约束不当的代理可能无意中在其响应中泄露敏感客户数据或专有信息。
+
+鲁棒平台提供深度防御策略来缓解这些风险。它从数据开始，确保企业的专有信息从未用于训练基础模型，并通过像VPC服务控制这样的控制保护。它需要输入和输出过滤，像防火墙一样用于提示和响应。最后，平台必须提供合同保护，如知识产权赔偿，用于训练数据和生成的输出，给企业部署代理所需的法律和技术信心。
+
+## Agent治理：控制平面而非蔓延
+随着代理及其工具在组织中扩散，它们创建一个新的、复杂交互网络和潜在漏洞，这种挑战通常称为“代理蔓延”。管理这需要超越保护单个代理，转向实现更高阶架构方法：一个中央网关，作为所有代理活动的控制平面。
+
+想象一个繁忙的大都市，有数千辆自治车辆——用户、代理和工具——都带着目的移动。没有交通灯、车牌和中央控制系统，混乱将主宰。网关方法创建那个控制系统，建立所有代理交通的强制入口点，包括用户到代理提示或UI交互、代理到工具调用（通过MCP）、代理到代理协作（通过A2A），以及直接推理请求到LM。通过坐在这个关键交叉点，组织可以检查、路由、监控和管理每个交互。
+
+这个控制平面服务两个主要、互连的功能：
+1. **运行时策略执行**：它作为实现安全的架构瓶颈。它处理认证（“我知道这个行动者是谁吗？”）和授权（“他们有权限做这个吗？”）。集中执行提供可观察性的“单一玻璃窗”，为每个交易创建常见日志、指标和跟踪。这将分散的代理和工作流意大利面条转变为透明和可审计的系统。
+
+2. **集中治理**：要有效执行策略，网关需要真相来源。这由中央注册表提供——代理和工具的企业应用商店。这个注册表允许开发人员发现和重用现有资产，防止冗余工作，同时给管理员一个完整库存。更重要的是，它启用代理和工具的正式生命周期，允许在发布前进行安全审查、版本控制，以及创建细粒度策略，规定哪些业务单元可以访问哪些代理。
+
+通过将运行时网关与中央治理注册表结合，组织将混乱蔓延的风险转变为管理的、安全的、高效生态系统。
+
+## 成本和可靠性：基础设施基础
+最终，企业级代理必须既可靠又具成本效益。一个经常失败或提供缓慢结果的代理有负ROI。相反，一个禁止性昂贵的代理无法扩展以满足业务需求。底层基础设施必须设计来管理这种权衡，安全并遵守法规和数据主权。
+
+在某些情况下，您需要的功能是scale-to-zero（归零），当您对特定代理或子功能有不规则流量时。对于任务关键、延迟敏感的工作负载，平台必须提供专用、保证容量，如LM服务的[Provisioned Throughput](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/provisioned-throughput/overview?hl=zh-cn)<sup>41</sup>或像[Cloud Run](https://cloud.google.com/run/sla?e=48754805&hl=en)<sup>42</sup>这样的运行时的99.9%服务水平协议（SLA）。这提供可预测的性能，确保您最重要的代理即使在重负载下也始终响应。通过提供这种基础设施选项谱系，加上成本和性能的全面监控，您为将AI代理从有前景的创新扩展为核心、可靠的企业组件建立了最终、必不可少的基础。
+
+## Agent是如何进化并学习
+部署在真实世界中的代理在动态环境中运行，其中策略、技术和数据格式不断变化。没有适应能力，代理的性能将随着时间退化——一个过程通常称为“老化”——导致效用和信任的丧失。手动更新大型代理舰队以跟上这些变化是不经济的且缓慢的。更可扩展的解决方案是设计可以自治学习和进化的代理，以[最小工程努力](https://github.com/CharlesQ9/Self-Evolving-Agents)<sup>43</sup>在工作中改善其质量。
+
+## Agent如何学习和自我进化
+就像人类一样，Agent从经验和外部信号中学习。这个学习过程由几个信息来源驱动：
+* **运行时经验**： 代理从运行时工件中学习，如会话日志、跟踪和内存，这些捕捉成功、失败、工具交互和决策轨迹。至关重要的是，这包括Human-in-the-Loop (HITL)反馈，提供权威更正和指导。
+* **外部信号**： 学习也由新外部文档驱动，如更新的企业策略、公共监管指南，或来自其他代理的批评。
+
+然后这个信息用于优化代理的未来行为。先进系统不是简单总结过去交互，而是创建可泛化工件来指导未来任务。最成功的适应技术分为两个类别：
+* **增强上下文工程**： 系统不断细化其提示、少样本示例，以及从内存检索的信息。通过为每个任务优化提供给LM的上下文，它增加成功的可能性。
+* **工具优化和创建**： 代理的推理可以识别其能力的差距并采取行动填补它们。这可能涉及获得新工具的访问、在飞行中创建新工具（例如，Python脚本），或修改现有工具（例如，更新API模式）。
+
+额外的优化技术，如动态重新配置多代理设计模式或使用人类反馈的强化学习（RLHF），是活跃的研究领域。
+
+示例：学习新合规指南
+考虑一个在高度监管行业如金融或生命科学中运行的企业代理。其任务是生成必须遵守隐私和监管规则（例如，GDPR）的报告。
+
+这可以使用多代理工作流实现：
+1. 一个**查询Agent**响应用户请求检索原始数据。
+2. 一个**报告Agent**将此数据合成到草稿报告中。
+3. 一个**批评Agent**，配备已知合规指南，审查报告。如果遇到歧义或需要最终签发，它升级到人类领域专家。
+4. 一个**学习Agent**观察整个交互，特别注意来自人类专家的更正反馈。然后它将此反馈泛化为新的、可重用指南（例如，批评代理的更新规则或报告代理的细化上下文）。
+
+下图是合规性指南示例多代理工作流程:
+![合规性指南示例多代理工作流程](https://github.com/HauUhang/Agents/blob/main/img/workflow.png?raw=true)
+
+例如，如果人类专家标记某些家庭统计必须匿名化，学习代理记录此更正。下次生成类似报告时，批评代理将自动应用这个新规则，减少人类干预的需求。这个批评、人类反馈和泛化的循环允许系统自治适应演变的合规要求<sup>44</sup>。
+
+## 模拟和代理健身房 - 下一个前沿
+我们呈现的设计模式可以分类为在线学习，其中代理需要使用它们被工程化的资源和设计模式学习。现在正在研究更先进的方法，其中有一个专用平台，工程化用于在离线过程中优化多代理系统，具有先进的工具和能力，这些不是多代理运行时环境的一部分。这种[代理健身房](https://arxiv.org/abs/2502.14499)<sup>45</sup>的关键属性是：
+1. 它不在执行路径中。它是一个独立的离线生产平台，因此可以有任何LM模型的协助、离线工具、云应用程序等。
+2. 它提供模拟环境，因此代理可以在新数据上“锻炼”并学习。这个模拟环境对于带有许多优化路径的“试错”优秀。
+3. 它可以调用高级合成数据生成器，这些生成器指导模拟尽可能真实，并压力测试代理（这可以包括高级技术，如红队、动态评估和批评代理家族）。
+4. 优化工具的军火库不是固定的，它可以采用新工具（通过像MCP或A2A这样的开放协议），或在更高级设置中 - 学习新概念并围绕它们制作工具。
+5. 最后，即使像代理健身房这样的结构，也可能无法克服某些边缘案例（由于企业中著名的“部落知识”问题）。在这些情况下，我们看到代理健身房能够连接到领域专家的人类结构，并咨询他们正确的输出集来指导下一组优化。
+
+# 高级Agent示例
+## Google联合科学家
+联合科学家是一个高级AI Agent，设计为虚拟研究合作者，通过系统探索复杂问题空间加速科学发现。它使研究人员能够定义目标、在指定的公共和专有知识来源中扎根代理，然后生成并评估新型假设景观。
+
+为了实现这一点，联合科学家催生整个代理生态系统彼此协作。
+![人工智能合作科学家设计系统](https://github.com/HauUhang/Agents/blob/main/img/AI_co-scientist.png?raw=true)
+
+将系统视为研究项目经理。AI首先采取广泛的研究目标并创建详细的项目计划。然后一个“监督者”代理充当经理，将任务委托给专业代理团队，并分配资源如计算能力。这种结构确保项目可以轻松扩展，并且团队的方法在他们向最终目标工作时改进。
+![合作科学家多智能体工作流程](https://github.com/HauUhang/Agents/blob/main/img/Co-scientist.png?raw=true)
+
+各种代理工作数小时，甚至数天，并不断改进生成的假设，运行循环和元循环，不仅改进生成的idea，还改进我们判断和创建新idea的方式。
+
+## AlphaEvolve代理
+另一个高级代理示例是AlphaEvolve，一个AI代理，发现并优化数学和计算机科学中复杂问题的算法。
+
+AlphaEvolve通过结合我们Gemini语言模型的创意代码生成与自动化评估系统工作。它使用进化过程：AI生成潜在解决方案，评估者评分它们，最有前景的想法用作下一代代码的灵感。
+
+这种方法已经导致重大突破，包括：
+* 改善Google数据中心、芯片设计和AI训练的效率。
+* 发现更快的矩阵乘法算法。
+* 找到开放数学问题的新解决方案。
+
+AlphaEvolve擅长验证解决方案质量远比首先找到它更容易的问题。
+![Alpha Evolve 设计系统](https://github.com/HauUhang/Agents/blob/main/img/Alpha_Evolve.png?raw=true)
+
+AlphaEvolve设计用于人类和AI之间的深度、迭代伙伴关系。这种协作以两种主要方式工作：
+* **透明解决方案**： AI生成解决方案作为人类可读代码。这种透明允许用户理解逻辑、获得洞见、信任结果，并直接修改代码以满足他们的需求。
+* **专家指导**： 人类专业知识对于定义问题至关重要。用户通过细化评估指标和指导探索来指导AI，这防止系统利用问题定义中的无意漏洞。这个交互循环确保最终解决方案既强大又实用。
+
+代理的结果是代码的持续改进，不断改进人类指定的指标。
+![算法演化](https://github.com/HauUhang/Agents/blob/main/img/Algorithm_evolution.png?raw=true)
+
+# 结论
+生成式AI代理标志着一个关键演变，将人工智能从内容创建的被动工具转变为问题解决的主动、自治伙伴。本文档提供了理解和构建这些系统的正式框架，超越原型，建立可靠、生产级的架构。
+
+我们已将代理解构为其三个基本组件：推理**模型**（“大脑”）、可操作**工具**（“双手”），以及治理**协调层**（“神经系统”）。这些部分的无缝集成，在连续“思考、行动、观察”循环中运行，解锁代理的真正潜力。通过分类代理系统——从1级连接问题解决者到3级协作多代理系统——架构师和产品领导者现在可以战略性地界定他们的雄心，以匹配任务的复杂性。
+
+中央挑战和机会在于新的开发人员范式。我们不再只是定义明确逻辑的“砖瓦工”；我们是必须指导、约束和调试自治实体的“架构师”和“导演”。使LM如此强大的灵活性也是其不可靠性的来源。因此，成功不是仅在初始提示中找到，而是在整个系统应用的工程严谨性中：在鲁棒工具合同、弹性错误处理、复杂上下文管理和全面评估中。
+
+这里概述的原则和架构模式作为基础蓝图。它们是导航这个软件新前沿的指南针，使我们能够构建不仅仅是“工作流自动化”，而是真正协作、有能力且适应性的新团队成员。随着这项技术成熟，这种纪律化的、架构方法将是利用代理AI全部力量的决定因素。
+
+#参考文献
+1. Julia Wiesinger, Patrick Marlow, et al. 2024 “Agents”.  
+Available at: https://www.kaggle.com/whitepaper-agents.
+2. Antonio Gulli, Lavi Nigam, et al. 2025 “Agents Companion”.  
+Available at: https://www.kaggle.com/whitepaper-agent-companion.
+3. Shunyu Yao, Y. et al., 2022, 'ReAct: Synergizing Reasoning and Acting in Language Models'.  
+Available at: https://arxiv.org/abs/2210.03629.
+4. Wei, J., Wang, X. et al., 2023, 'Chain-of-Thought Prompting Elicits Reasoning in Large Language Models'.  
+Available at: https://arxiv.org/pdf/2201.11903.pdf.
+5. Shunyu Yao, Y. et al., 2022, 'ReAct: Synergizing Reasoning and Acting in Language Models'.  
+Available at: https://arxiv.org/abs/2210.03629.
+6. https://www.amazon.com/Agentic-Design-Patterns-Hands-Intelligent/dp/3032014018
+7. Shunyu Yao, et. al., 2024, ‘τ-bench: A Benchmark for Tool-Agent-User Interaction in Real-World Domains’,  
+Available at: https://arxiv.org/abs/2406.12045.
+8. https://artificialanalysis.ai/guide
+9. https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/vertex-ai-model-optimizer
+10. https://gemini.google/overview/gemini-live/
+11. https://cloud.google.com/vision?e=48754805&hl=en
+12. https://cloud.google.com/speech-to-text?e=48754805&hl=en
+13. https://medium.com/google-cloud/genaiops-operationalize-generative-ai-apractical-guide-d5bedaa59d78
+14. https://cloud.google.com/vertex-ai/generative-ai/docs/agent-engine/code-execution/overview
+15. https://ai.google.dev/gemini-api/docs/function-calling
+16. https://github.com/modelcontextprotocol/
+17. https://ai.google.dev/gemini-api/docs/google-search
+18. https://google.github.io/adk-docs/
+19. https://google.github.io/adk-docs/sessions/memory/
+20. https://cloud.google.com/architecture/choose-design-pattern-agentic-ai-system
+21. https://cloud.google.com/vertex-ai/generative-ai/docs/agent-engine/overview
+22. https://cloud.google.com/kubernetes-engine/docs/concepts/gke-and-cloud-run
+23. https://github.com/GoogleCloudPlatform/agent-starter-pack
+24. Sokratis Kartakis, 2024, ‘GenAI in Production: MLOps or GenAIOps?’.  
+Available at: https://medium.com/google-cloud/genai-in-production-mlops-or-genaiops-25691c9becd0.
+25. Guangya Liu, Sujay Solomon, March 2025 “AI Agent Observability - Evolving Standards and Best Practice”.  
+Available at: https://opentelemetry.io/blog/2025/ai-agent-observability/.
+26. https://discuss.google.dev/t/agents-are-not-tools/192812
+27. Damien Masson et. al, 2024, ‘DirectGPT: A Direct Manipulation Interface to Interact with Large Language Models’.  
+Available at: https://arxiv.org/abs/2310.03691.
+28. MCP UI is a system of controlling UI via MCP tools https://mcpui.dev/.
+29. AG UI is a protocol of controlling UI via event passing and optionally shared state https://ag-ui.com/.
+30. A2UI is a protocol of generating UI via structured output and A2A message
+passing https://github.com/google/A2UI.
+31. https://cloud.google.com/vertex-ai/generative-ai/docs/models/gemini/2-5-flash-live-api.
+32. https://saif.google/focus-on-agents.
+33. https://simonwillison.net/series/prompt-injection/.
+34. https://storage.googleapis.com/gweb-research2023-media/pubtools/1018686.pdf.
+35. https://spiffe.io/.
+36. https://openreview.net/pdf?id=l9rATNBB8Y.
+37. https://google.github.io/adk-docs/safety/.
+38. https://google.github.io/adk-docs/callbacks/design-patterns-and-best-practices
+/#guardrails-policy-enforcement
+39. TKTK
+40. https://cloud.google.com/security-command-center/docs/model-armor-overview
+41. https://cloud.google.com/vertex-ai/generative-ai/docs/provisioned-throughput/overview
+42. https://cloud.google.com/run/sla
+43. https://github.com/CharlesQ9/Self-Evolving-Agents
+44. Juraj Gottweis, et. al., 2025, ‘Accelerating scientific breakthroughs with an AI co-scientist’.  
+Available at: https://research.google/blog/accelerating-scientific-breakthroughs-with-an-ai-co-scientist/.
+45. Deepak Nathani et. al. 2025, ‘MLGym: A New Framework and Benchmark for Advancing AI Research Agents’,  
+Available at: https://arxiv.org/abs/2502.14499.
