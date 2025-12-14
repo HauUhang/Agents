@@ -393,7 +393,7 @@ AlphaEvolve设计用于人类和AI之间的深度、迭代伙伴关系。这种�
 
 这里概述的原则和架构模式作为基础蓝图。它们是导航这个软件新前沿的指南针，使我们能够构建不仅仅是“工作流自动化”，而是真正协作、有能力且适应性的新团队成员。随着这项技术成熟，这种纪律化的、架构方法将是利用代理AI全部力量的决定因素。
 
-#参考文献
+# 参考文献
 1. Julia Wiesinger, Patrick Marlow, et al. 2024 “Agents”.  
 Available at: https://www.kaggle.com/whitepaper-agents.
 2. Antonio Gulli, Lavi Nigam, et al. 2025 “Agents Companion”.  
